@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Servidor HTTP - Servicios</title>
+<style>
+  body { font-family: sans-serif; max-width: 500px; margin: 40px auto; }
+  section { margin-bottom: 25px; padding: 15px; border: 1px solid #ccc; border-radius: 6px; }
+  #result { color: green; margin-top: 10px; }
+  #error { color: red; margin-top: 10px; }
+</style>
+</head>
+<body>
+<h1>Mini aplicación - Servidor HTTP</h1>
+<img src="/imagen.jpg" alt="Imagen servida por el servidor" width="200">
+
+<section>
+  <h2>Saludo</h2>
+  <form id="form-greeting">
+    <input type="text" id="name" placeholder="Tu nombre" required>
+    <button type="submit">Saludar</button>
+  </form>
+</section>
+
+<section>
+  <h2>Cuadrado de un número</h2>
+  <form id="form-square">
+    <input type="number" id="value" placeholder="Número" required step="any">
+    <button type="submit">Calcular</button>
+  </form>
+</section>
+
+<section>
+  <h2>Hora del servidor</h2>
+  <button id="btn-time" type="button">Ver hora</button>
+</section>
+
+<div id="result"></div>
+<div id="error"></div>
+
+<script src="/app.js"></script>
+</body>
+</html>

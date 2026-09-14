@@ -1,131 +1,132 @@
 package com.mycompany.httpserver;
 
-/**
- *
- * @author keysi
- */
 import java.net.*;
 import java.io.*;
 import java.nio.file.Files;
+import java.time.LocalDateTime;
 
 public class HttpServer {
 
     public static void main(String[] args) throws IOException, URISyntaxException {
-        ServerSocket serverSocket = new ServerSocket(35000);
-        Boolean running = true;
+        int port = 35000;
+        if (args.length > 0) {
+            try {
+                port = Integer.parseInt(args[0]);
+            } catch (NumberFormatException e) {
+                System.out.println("Puerto inválido, usando 35000 por defecto.");
+            }
+        }
+        ServerSocket serverSocket = new ServerSocket(port);
+        boolean running = true;
         while (running) {
             System.out.println("Ready to receive...");
             Socket clientSocket = serverSocket.accept();
 
-            PrintWriter out = new PrintWriter(
-                    clientSocket.getOutputStream(), true);
-            BufferedReader in = new BufferedReader(
-                    new InputStreamReader(clientSocket.getInputStream()));
+            PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+            BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
             boolean isFirstLine = true;
-            String reqURIStr = "";
             String reqMethod = "";
+            String reqURIStr = "";
             String inputLine;
             while ((inputLine = in.readLine()) != null) {
                 if (isFirstLine) {
                     String[] requestParts = inputLine.split(" ");
                     reqMethod = requestParts[0];
                     reqURIStr = requestParts[1];
-                    System.out.println("Requested URI: " + reqURIStr);
+                    System.out.println("Requested: " + reqMethod + " " + reqURIStr);
                     isFirstLine = false;
                 }
-                System.out.println("Received: " + inputLine);
                 if (!in.ready()) {
                     break;
                 }
             }
 
-            String output = "";
             URI reqURI = new URI(reqURIStr);
             String path = reqURI.getPath();
             String queryStr = reqURI.getQuery();
 
-            if (reqMethod.equals("GET") && path.equals("/hello")) {
-                System.out.println("Query str: " + queryStr);
-                output = "HTTP/1.1 200 OK\r\n"
-                        + "Content-Type: text/html\r\n\r\n"
-                        + "{\"response\":\"Hello world. " + queryStr + "\" }";
-            } else if (reqMethod.equals("POST") && path.equals("/hellopost")) {
-                System.out.println("Query str: " + queryStr);
-                output = "HTTP/1.1 200 OK\r\n"
-                        + "Content-Type: text/html\r\n\r\n"
-                        + "{\"response\":\"Hello world (via POST). " + queryStr + "\" }";
-            } else {
-                File file = new File("public" + path);
-                if (file.exists() && file.isFile()) {
-                    byte[] fileBytes = Files.readAllBytes(file.toPath());
-                    String contentType = "application/octet-stream";
-                    if (path.endsWith(".html")) contentType = "text/html";
-                    else if (path.endsWith(".js")) contentType = "application/javascript";
-                    else if (path.endsWith(".png")) contentType = "image/png";
-                    else if (path.endsWith(".jpg") || path.endsWith(".jpeg")) contentType = "image/jpeg";
+            String output;
 
-                    String header = "HTTP/1.1 200 OK\r\n"
-                            + "Content-Type: " + contentType + "\r\n"
-                            + "Content-Length: " + fileBytes.length + "\r\n\r\n";
-
-                    OutputStream rawOut = clientSocket.getOutputStream();
-                    rawOut.write(header.getBytes());
-                    rawOut.write(fileBytes);
-                    rawOut.flush();
-                    output = null;
+            if (!reqMethod.equals("GET")) {
+                output = "HTTP/1.1 405 Method Not Allowed\r\n"
+                        + "Content-Type: text/plain\r\n\r\n"
+                        + "Método no soportado";
+            } else if (path.equals("/health")) {
+                output = "HTTP/1.1 200 OK\r\n"
+                        + "Content-Type: application/json\r\n\r\n"
+                        + "{\"status\":\"ok\"}";
+            } else if (path.equals("/server-time")) {
+                output = "HTTP/1.1 200 OK\r\n"
+                        + "Content-Type: application/json\r\n\r\n"
+                        + "{\"time\":\"" + LocalDateTime.now() + "\"}";
+            } else if (path.equals("/greeting")) {
+                String name = getQueryParam(queryStr, "name");
+                if (name == null || name.isEmpty()) {
+                    output = "HTTP/1.1 400 Bad Request\r\n"
+                            + "Content-Type: application/json\r\n\r\n"
+                            + "{\"error\":\"Falta el parámetro 'name'\"}";
                 } else {
                     output = "HTTP/1.1 200 OK\r\n"
-                            + "Content-Type: text/html\r\n\r\n"
-                            + "<!DOCTYPE html>\n"
-                            + "<html>\n"
-                            + "    <head>\n"
-                            + "        <title>Form Example</title>\n"
-                            + "        <meta charset=\"UTF-8\">\n"
-                            + "        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
-                            + "    </head>\n"
-                            + "    <body>\n"
-                            + "        <h1>Form with GET</h1>\n"
-                            + "        <form action=\"/hello\">\n"
-                            + "            <label for=\"name\">Name:</label><br>\n"
-                            + "            <input type=\"text\" id=\"name\" name=\"name\" value=\"John\"><br><br>\n"
-                            + "            <input type=\"button\" value=\"Submit\" onclick=\"loadGetMsg()\">\n"
-                            + "        </form> \n"
-                            + "        <div id=\"getrespmsg\"></div>\n"
-                            + "\n"
-                            + "        <script>\n"
-                            + "            function loadGetMsg() {\n"
-                            + "                let nameVar = document.getElementById(\"name\").value;\n"
-                            + "                const xhttp = new XMLHttpRequest();\n"
-                            + "                xhttp.onload = function() {\n"
-                            + "                    document.getElementById(\"getrespmsg\").innerHTML =\n"
-                            + "                    this.responseText;\n"
-                            + "                }\n"
-                            + "                xhttp.open(\"GET\", \"/hello?name=\"+nameVar);\n"
-                            + "                xhttp.send();\n"
-                            + "            }\n"
-                            + "        </script>\n"
-                            + "\n"
-                            + "        <h1>Form with POST</h1>\n"
-                            + "        <form action=\"/hellopost\">\n"
-                            + "            <label for=\"postname\">Name:</label><br>\n"
-                            + "            <input type=\"text\" id=\"postname\" name=\"name\" value=\"John\"><br><br>\n"
-                            + "            <input type=\"button\" value=\"Submit\" onclick=\"loadPostMsg(postname)\">\n"
-                            + "        </form>\n"
-                            + "        \n"
-                            + "        <div id=\"postrespmsg\"></div>\n"
-                            + "        \n"
-                            + "        <script>\n"
-                            + "            function loadPostMsg(name){\n"
-                            + "                let url = \"/hellopost?name=\" + name.value;\n"
-                            + "\n"
-                            + "                fetch (url, {method: 'POST'})\n"
-                            + "                    .then(x => x.text())\n"
-                            + "                    .then(y => document.getElementById(\"postrespmsg\").innerHTML = y);\n"
-                            + "            }\n"
-                            + "        </script>\n"
-                            + "    </body>\n"
-                            + "</html>";
+                            + "Content-Type: application/json\r\n\r\n"
+                            + "{\"greeting\":\"Hello, " + escapeJson(name) + "!\"}";
+                }
+            } else if (path.equals("/square")) {
+                String valueStr = getQueryParam(queryStr, "value");
+                Double value = null;
+                if (valueStr != null) {
+                    try {
+                        value = Double.parseDouble(valueStr);
+                    } catch (NumberFormatException e) {
+                        value = null;
+                    }
+                }
+                if (value == null) {
+                    output = "HTTP/1.1 400 Bad Request\r\n"
+                            + "Content-Type: application/json\r\n\r\n"
+                            + "{\"error\":\"Falta o es inválido el parámetro 'value'\"}";
+                } else {
+                    double result = value * value;
+                    output = "HTTP/1.1 200 OK\r\n"
+                            + "Content-Type: application/json\r\n\r\n"
+                            + "{\"input\":" + value + ",\"square\":" + result + "}";
+                }
+            } else {
+                String resourcePath = path.equals("/") ? "/index.html" : path;
+
+                if (resourcePath.contains("..")) {
+                    output = "HTTP/1.1 400 Bad Request\r\n"
+                            + "Content-Type: text/plain\r\n\r\n"
+                            + "Ruta no permitida";
+                } else {
+                    File file = new File("public" + resourcePath);
+                    if (file.exists() && file.isFile()) {
+                        byte[] fileBytes = Files.readAllBytes(file.toPath());
+                        String contentType = "application/octet-stream";
+                        if (resourcePath.endsWith(".html")) {
+                            contentType = "text/html";
+                        } else if (resourcePath.endsWith(".js")) {
+                            contentType = "application/javascript";
+                        } else if (resourcePath.endsWith(".png")) {
+                            contentType = "image/png";
+                        } else if (resourcePath.endsWith(".jpg") || resourcePath.endsWith(".jpeg")) {
+                            contentType = "image/jpeg";
+                        }
+
+                        String header = "HTTP/1.1 200 OK\r\n"
+                                + "Content-Type: " + contentType + "\r\n"
+                                + "Content-Length: " + fileBytes.length + "\r\n\r\n";
+
+                        OutputStream rawOut = clientSocket.getOutputStream();
+                        rawOut.write(header.getBytes());
+                        rawOut.write(fileBytes);
+                        rawOut.flush();
+                        output = null;
+                    } else {
+                        output = "HTTP/1.1 404 Not Found\r\n"
+                                + "Content-Type: text/plain\r\n\r\n"
+                                + "Recurso no encontrado";
+                    }
                 }
             }
 
@@ -138,5 +139,27 @@ public class HttpServer {
             clientSocket.close();
         }
         serverSocket.close();
+    }
+
+    private static String getQueryParam(String queryStr, String key) {
+        if (queryStr == null) {
+            return null;
+        }
+        String[] pairs = queryStr.split("&");
+        for (String pair : pairs) {
+            String[] kv = pair.split("=", 2);
+            if (kv.length == 2 && kv[0].equals(key)) {
+                try {
+                    return URLDecoder.decode(kv[1], "UTF-8");
+                } catch (UnsupportedEncodingException e) {
+                    return kv[1];
+                }
+            }
+        }
+        return null;
+    }
+
+    private static String escapeJson(String s) {
+        return s.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 }
