@@ -143,6 +143,8 @@ Luego abrir `http://localhost:35000/` en el navegador.
 
 \- Verificado accediendo remotamente vía IP pública en el puerto 35000.
 
+\*\*Limpieza:\*\* al finalizar las pruebas, la instancia EC2 fue terminada y se verificó que no quedaran recursos activos (Elastic IPs, instancias en ejecución), cumpliendo con la política de limpieza obligatoria del laboratorio.
+
 
 
 \## Evidencia
@@ -158,6 +160,10 @@ Luego abrir `http://localhost:35000/` en el navegador.
 !\[Instancia EC2 en ejecución](evidencia/ec2-running.png)
 
 !\[Servidor desplegado y funcionando en AWS](evidencia/remoto-funcionando.png)
+
+!\[Instancia terminada tras la limpieza final](evidencia/07-cleanup-terminated.png)
+
+
 
 
 
