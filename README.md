@@ -161,7 +161,7 @@ Luego abrir `http://localhost:35000/` en el navegador.
 
 !\[Servidor desplegado y funcionando en AWS](evidencia/remoto-funcionando.png)
 
-!\[Instancia terminada tras la limpieza final](evidencia/07-cleanup-terminated.png)
+!\[Instancia terminada tras la limpieza final](evidencia/cleanup-terminated.png)
 
 
 
