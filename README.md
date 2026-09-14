@@ -1,8 +1,8 @@
-\# HTTP Server - Laboratorio de Escalabilidad
+\*\*HTTP Server - Laboratorio de Escalabilidad\*\*
 
-\#Alumna Keyla Y Serna Illescas
+\*\*Alumna Keyla Y Serna Illescas\*\*
 
-\#TDSE Corte 2
+\*\*TDSE Corte 2\*\*
 
 
 
@@ -13,6 +13,8 @@ Este proyecto es un servidor de "recepción secuencial": como un mostrador de at
 
 
 \## Arquitectura
+
+```
 \[Navegador / Cliente JS]
 
 |
@@ -29,7 +31,7 @@ v
 
 +--> Servicios hardcoded: /health, /server-time, /greeting, /square
 
-
+```
 
 
 
